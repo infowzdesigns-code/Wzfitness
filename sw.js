@@ -1,6 +1,6 @@
 
 // WZ Fitness service worker -- network first, cache fallback
-const CACHE = 'wz-fitness-v6-5-0';
+const CACHE = 'wz-fitness-v6-6-0';
 const ASSETS = ['./', './index.html', './manifest.json', './wz-icon-192.png', './wz-icon-512.png', './wz-apple-icon-180.png'];
 
 self.addEventListener('install', event => {

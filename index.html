@@ -1292,6 +1292,67 @@ Object.assign(DB.EX, {
 // Original programme's cardio finishers log minutes + incline/level, not kg x reps
 ['Incline Treadmill Walk', 'Bike/Treadmill'].forEach(n => { if (DB.EX[n]) Object.assign(DB.EX[n], { kind: 'cardio', alt: 'Brisk outdoor walk or uphill walk' }); });
 
+/* ═════════ v6.6: Low-impact progressive plan ═════════
+   Bodyweight first, then resistance bands, then light weights, one exercise at a time:
+   you move a move up only when your form is solid. Pull-up bar work for core and back,
+   incline walking and rowing / hills for cardio. Sits alongside the fat-burn plan. */
+Object.assign(DB.EX, {
+  'Bodyweight Squat': { muscles: 'Quads · Glutes', equipment: 'Bodyweight', alt: 'Same anywhere. Hard on the knees? Squat to a chair', reps: '12–15 reps',
+    tips: ['Feet shoulder-width, toes slightly out', 'Sit back and down, chest up, 3 seconds down', 'Knees follow your toes; stand up tall and squeeze'], yt: yt('bodyweight squat') },
+  'Band Squat': { muscles: 'Quads · Glutes', equipment: 'Resistance band', alt: 'Bodyweight squat with a 3s pause at the bottom',
+    tips: ['Stand on the band, hold it at your shoulders', 'Same squat as before: slow down, drive up', 'Band too easy? Use a thicker one or a shorter grip'], yt: yt('resistance band squat') },
+  'Band Reverse Lunge': { muscles: 'Quads · Glutes', equipment: 'Resistance band', alt: 'Bodyweight reverse lunge, slow',
+    tips: ['Band under the front foot, hands at shoulders', 'Step back, back knee toward the floor', 'Push through the front heel to stand'], yt: yt('resistance band reverse lunge') },
+  'DB Reverse Lunge': { muscles: 'Quads · Glutes', equipment: 'Dumbbells', alt: 'Bodyweight reverse lunge, slow',
+    tips: ['Light dumbbells at your sides', 'Step back, back knee toward the floor', 'Upright body, push through the front heel'], yt: yt('dumbbell reverse lunge') },
+  'Band Push-Ups': { muscles: 'Chest · Shoulders · Triceps', equipment: 'Resistance band', alt: 'Push-ups with a 3s lowering',
+    tips: ['Band across your upper back, ends under your hands', 'Body in one straight line', 'Chest to the floor, press away hard'], yt: yt('banded push up') },
+  'Band Row': { muscles: 'Back · Biceps', equipment: 'Resistance band', alt: 'Inverted row under a sturdy table',
+    tips: ['Band round a post or under your feet', 'Pull elbows back, squeeze shoulder blades', '2 seconds back to the start'], yt: yt('resistance band row') },
+  'Glute Bridge': { muscles: 'Glutes · Hamstrings', equipment: 'Bodyweight', alt: 'Same anywhere', reps: '12–15 reps',
+    tips: ['Lie on your back, feet flat near your bum', 'Push through your heels, lift hips till body is straight', 'Squeeze 2 seconds at the top'], yt: yt('glute bridge') },
+  'Band Good Morning': { muscles: 'Hamstrings · Glutes · Back', equipment: 'Resistance band', alt: 'Glute bridge with a 3s squeeze',
+    tips: ['Stand on the band, loop it behind your neck', 'Soft knees, hinge at the hips with a flat back', 'Stand up by squeezing your glutes'], yt: yt('band good morning') },
+  'Pike Push-Ups': { muscles: 'Shoulders · Triceps', equipment: 'Bodyweight', alt: 'Same anywhere. Too hard: hands on a bench', reps: '8–12 reps',
+    tips: ['Hips high, body like an upside-down V', 'Lower the top of your head toward the floor', 'Press back up through the shoulders'], yt: yt('pike push up') },
+  'Band Shoulder Press': { muscles: 'Shoulders · Triceps', equipment: 'Resistance band', alt: 'Pike push-ups',
+    tips: ['Stand on the band, hands at shoulders', 'Press straight up, ribs down', 'Lower slowly'], yt: yt('resistance band shoulder press') },
+  'Dead Hang': { kind: 'time', muscles: 'Grip · Shoulders · Core', equipment: 'Pull-up bar', alt: 'Hang from a sturdy door frame bar or monkey bars', reps: '20–40 sec',
+    tips: ['Grip the bar, arms straight', 'Pull your shoulders slightly down, away from your ears', 'Breathe; build up to 60 seconds over the weeks'], yt: yt('dead hang') },
+  'Negative Pull-Ups': { muscles: 'Back · Biceps · Core', equipment: 'Pull-up bar', alt: 'Inverted row', reps: '3–5 slow reps',
+    tips: ['Jump or step up so your chin is over the bar', 'Lower yourself as slowly as you can, 3–5 seconds', 'Reset and repeat'], yt: yt('negative pull up') },
+  'Assisted Pull-Ups': { muscles: 'Back · Biceps · Core', equipment: 'Pull-up bar + band (or machine)', alt: 'Negative pull-ups', reps: '6–8 reps',
+    tips: ['Band looped on the bar under a knee or foot', 'Pull your chest to the bar, elbows down', 'Lower all the way, no swinging'], yt: yt('band assisted pull up') },
+  'Hanging Knee Raises': { muscles: 'Core · Grip', equipment: 'Pull-up bar', alt: 'Lying knee tucks on the floor', reps: '8–12 reps',
+    tips: ['Hang with straight arms, shoulders down', 'Bring knees up toward your chest without swinging', 'Lower slowly. This replaces crunches'], yt: yt('hanging knee raise') },
+  '1 km Treadmill Run': { kind: 'cardio', muscles: 'Heart · Legs', equipment: 'Treadmill', alt: '1 km outdoor run or brisk walk',
+    tips: ['Straight after your push-ups: get on and run 1 km', 'Steady pace you can keep, about 6–8 minutes', 'Log your time; try to beat it each week'], yt: yt('treadmill running form') },
+  'Row or Hill Intervals': { kind: 'cardio', muscles: 'Heart · Back · Legs', equipment: 'Rower, or a hill outside', alt: 'Brisk uphill walk',
+    tips: ['Rower: legs, body, arms; steady pace you can talk at', 'Or hills: run or walk up hard, walk down easy', 'Log minutes'], yt: yt('rowing machine technique beginner') },
+});
+DB.EX['Incline Treadmill Walk'] && (DB.EX['Incline Treadmill Walk'].tips = ['Speed about 2.8 mph (4.5 km/h), incline 8–12%', 'Don’t hold the handrails; let your arms swing', 'You should be able to talk but feel warm. Log minutes and incline']);
+const LI_FAMILIES = {
+  squat: { label: 'Squat', steps: ['Bodyweight Squat', 'Band Squat', 'Goblet Squat'] },
+  lunge: { label: 'Lunge', steps: ['Reverse Lunges', 'Band Reverse Lunge', 'DB Reverse Lunge'] },
+  push:  { label: 'Push', steps: ['Push-Ups', 'Band Push-Ups', 'DB Bench Press'] },
+  row:   { label: 'Row', steps: ['Inverted Row', 'Band Row', 'Seated Cable Row'] },
+  hinge: { label: 'Hinge', steps: ['Glute Bridge', 'Band Good Morning', 'DB Romanian Deadlift'] },
+  press: { label: 'Press', steps: ['Pike Push-Ups', 'Band Shoulder Press', 'DB Shoulder Press'] },
+  bar:   { label: 'Pull-up bar', steps: ['Dead Hang', 'Negative Pull-Ups', 'Assisted Pull-Ups'], names: ['Hang', 'Negatives', 'Pull-ups'] },
+};
+const LI_STAGE_NAMES = ['Bodyweight', 'Bands', 'Light weights'];
+function liStage(f) { const v = (S.liStage || {})[f]; return v >= 1 && v <= 3 ? v : 1; }
+function liEx(f) { return LI_FAMILIES[f].steps[liStage(f) - 1]; }
+function liFamilyOf(n) { return Object.keys(LI_FAMILIES).find(f => LI_FAMILIES[f].steps.includes(n)) || null; }
+function liStageName(f, st) { const F = LI_FAMILIES[f]; return (F.names || LI_STAGE_NAMES)[(st || liStage(f)) - 1]; }
+function isGuided(k) { return k === 'burn' || k === 'low'; }
+function exReps(n) {
+  const info = exInfo(n);
+  if (info.reps) return info.reps;
+  return info.kind === 'time' ? '30–45 sec' : '10–12 reps';
+}
+function liSplit(o, fams) { return Object.defineProperty(o, 'exercises', { enumerable: true, get: () => fams.map(f => LI_FAMILIES[f] ? liEx(f) : f) }); }
+
 DB.PROGRAMS = {
   ppl: {
     name: 'Classic Push / Pull / Legs', short: 'PPL',
@@ -1314,6 +1375,22 @@ DB.PROGRAMS = {
         exercises: ['Zone 2 Cardio', 'Mobility & Stretch'] },
     ],
   },
+  low: {
+    name: 'Low-impact progressive (5 days)', short: 'Low-impact',
+    week: [null, 'la', 'lw', 'lb', null, 'lc', 'lr'], // Mon A · Tue walk · Wed B · Fri C + 1 km · Sat row/hills
+    splits: [
+      liSplit({ key: 'la', name: 'Strength A', label: 'Strength A', title: 'Strength A', day: 'Monday', color: '#30B0C7', mins: 45, kind: 'circuit' },
+        ['squat', 'push', 'row', 'hinge', 'bar', 'Hanging Knee Raises', 'Rower Intervals']),
+      { key: 'lw', name: 'Incline walk', label: 'Walk', title: 'Incline walk', day: 'Tuesday', color: '#34C759', mins: 45, kind: 'cardio',
+        exercises: ['Incline Treadmill Walk', 'Mobility & Stretch'] },
+      liSplit({ key: 'lb', name: 'Strength B', label: 'Strength B', title: 'Strength B', day: 'Wednesday', color: '#5E5CE6', mins: 45, kind: 'circuit' },
+        ['lunge', 'press', 'row', 'squat', 'bar', 'Hanging Knee Raises', 'Bike Intervals']),
+      liSplit({ key: 'lc', name: 'Push-ups + 1 km', label: 'Push + 1 km', title: 'Push-ups + 1 km run', day: 'Friday', color: '#FF9F0A', mins: 40, kind: 'circuit' },
+        ['push', 'squat', 'row', 'bar', 'Hanging Knee Raises', '1 km Treadmill Run']),
+      { key: 'lr', name: 'Row or hills', label: 'Row', title: 'Row or hills', day: 'Saturday', color: '#32ADE6', mins: 40, kind: 'cardio',
+        exercises: ['Row or Hill Intervals', 'Mobility & Stretch'] },
+    ],
+  },
 };
 
 // Which programme applies on a given date: the newest block that started on/before it.
@@ -1326,8 +1403,11 @@ function programKeyFor(d) {
 function programFor(d) { return DB.PROGRAMS[programKeyFor(d)] || DB.PROGRAMS.ppl; }
 
 // Week-by-week coaching for the 4-week burn block (progressive: more rounds, less rest).
+function lowCardioMins(key, week) { const w = Math.max(1, Math.min(4, week)) - 1; return key === 'lw' ? [30, 35, 40, 45][w] : [25, 30, 30, 35][w]; }
 function burnPrescription(split, week) {
   const w = Math.max(1, Math.min(4, week));
+  if (split.key === 'lw') return `${lowCardioMins('lw', w)} min incline walk: about 2.8 mph (4.5 km/h), incline 8–12%, no holding the rails. Then 5 min stretching.`;
+  if (split.key === 'lr') return `${lowCardioMins('lr', w)} min on the rower at a steady pace, or hills outside: hard up, easy down. Then 5 min stretching.`;
   if (split.kind === 'cardio') {
     const mins = split.key === 'z2' ? [45, 50, 55, 60][w - 1] : [35, 40, 40, 45][w - 1];
     return `${mins} min easy-steady cardio, then core and stretching. Sauna or steam afterwards if you like (10–15 min, drink water).`;
@@ -1339,7 +1419,7 @@ function exPrescription(n, week) {
   const info = (typeof exInfo === 'function') ? exInfo(n) : (DB.EX[n] || {});
   if (info.kind === 'cardio') return (n === 'Zone 2 Cardio' || n === 'Incline Treadmill Walk') ? 'Log minutes + incline/level' : 'Intervals: log minutes + level';
   if (info.kind === 'time') return n === 'Mobility & Stretch' ? '5–10 min' : '3 × 30–45s';
-  return [3, 3, 4, 4][Math.max(1, Math.min(4, week)) - 1] + ' rounds × 10–12 reps';
+  return [3, 3, 4, 4][Math.max(1, Math.min(4, week)) - 1] + ' rounds × ' + exReps(n);
 }
 
 /* ═══════════════════ WZ Fitness v5 ═══════════════════ */
@@ -2324,7 +2404,7 @@ function dashboardView() {
             : `${Math.round((week / BW) * 100)}% through ${blk ? 'this block' : 'your programme'}`
               + (blk && blk.goalKg ? ` \u00b7 target ${blk.goalKg.toFixed(1)} kg by ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(addDays(parseDateKey(blk.start), blk.lengthDays - 1))}` : '')),
         el('div', { class: 'journey-pills' }, ...pills),
-        (!maintenance && blk && blk.program !== 'burn')
+        (!maintenance && blk && blk.program === 'ppl')
           ? el('button', { class: 'v5-btn secondary block', style: 'margin-top:14px;', type: 'button',
               onClick: () => { if (confirm('Switch this block to the 5-day fat-burn programme? Logged workouts stay as they are.')) { blk.program = 'burn'; saveState(); render(); } }
             }, 'Switch to fat-burn programme')
@@ -2583,8 +2663,8 @@ function splitPicker(dateKey) {
   const defSplit = (() => { const n = defaultSplitName(d); return n ? P.splits.find(s => s.name === n) : null; })();
   const def = defSplit ? defSplit.key : null;
   const activeKey = current || (def || 'rest');
-  const burn = P === DB.PROGRAMS.burn;
-  const opts = P.splits.filter(s => !s.hidePick || s.key === activeKey).map(s => ({ k: s.key, l: burn ? (s.kind === 'cardio' ? 'Cardio' : s.name) : (s.label || s.name), col: s.color }))
+  const burn = P === DB.PROGRAMS.burn || P === DB.PROGRAMS.low;
+  const opts = P.splits.filter(s => !s.hidePick || s.key === activeKey).map(s => ({ k: s.key, l: P === DB.PROGRAMS.low ? s.label : (burn ? (s.kind === 'cardio' ? 'Cardio' : s.name) : (s.label || s.name)), col: s.color }))
     .concat([{ k: 'rest', l: 'Rest', col: 'var(--label2)' }]);
   const planned = defSplit ? (defSplit.title || defSplit.name) : 'Rest day';
   const swapped = current && current !== def;
@@ -2655,14 +2735,18 @@ function buildCircuitSteps(split, entry, week) {
   for (let r = done + 1; r <= plan.rounds; r++) {
     moves.forEach((ex, mi) => {
       const timed = exInfo(ex.n).kind === 'time';
-      steps.push({ t: timed ? 'timer' : 'work', secs: timed ? 40 : 0, n: ex.n, kicker: `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${moves.length}`,
-        title: ex.n, reps: timed ? null : '10–12 reps', cue: coachCue(ex.n, 0), cue2: coachCue(ex.n, 1), alt: exInfo(ex.n).alt });
+      steps.push({ t: timed ? 'timer' : 'work', secs: timed ? (ex.n === 'Dead Hang' ? 30 : 40) : 0, n: ex.n, kicker: `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${moves.length}`,
+        title: ex.n, reps: timed ? null : exReps(ex.n), cue: coachCue(ex.n, 0), cue2: coachCue(ex.n, 1), alt: exInfo(ex.n).alt });
       if (mi < moves.length - 1) steps.push({ t: 'timer', secs: plan.rest, kicker: 'Rest', title: 'Breathe', rest: true, nextOf: true });
     });
     steps.push({ t: 'action', act: 'round', r });
     if (r < plan.rounds) steps.push({ t: 'timer', secs: 90, kicker: `Round ${r} done 💪`, title: 'Rest 90 seconds', cue: 'Sip water. Shake out your legs. Next round starts the same way.', rest: true, nextOf: true });
   }
-  if (fin && !fin.sets.some(s => s.done)) {
+  if (fin && !fin.sets.some(s => s.done) && fin.n === '1 km Treadmill Run') {
+    steps.push({ t: 'timer', secs: 60, kicker: 'Finisher next', title: 'Get on the treadmill', cue: 'Straight from your push-ups: 1 km at a steady pace you can hold.', rest: true });
+    steps.push({ t: 'work', n: fin.n, kicker: 'Finisher', title: 'Run 1 km', reps: 'Steady, about 6–8 min', cue: coachCue(fin.n, 1), cue2: coachCue(fin.n, 2), alt: exInfo(fin.n).alt });
+    steps.push({ t: 'action', act: 'finisher', mins: 8 });
+  } else if (fin && !fin.sets.some(s => s.done)) {
     const machine = /Rower/.test(fin.n) ? 'rower' : 'bike';
     steps.push({ t: 'timer', secs: 60, kicker: 'Finisher next', title: `Get on the ${machine}`, cue: `${plan.ints} rounds of 30 seconds hard, 60 seconds easy. Hard means you can’t talk.`, rest: true });
     for (let k = 1; k <= plan.ints; k++) {
@@ -2675,9 +2759,13 @@ function buildCircuitSteps(split, entry, week) {
   return steps;
 }
 function buildCardioSteps(split, entry, week) {
-  const mins = split.key === 'z2' ? [45, 50, 55, 60][Math.min(4, week) - 1] : [35, 40, 40, 45][Math.min(4, week) - 1];
+  const low = split.key === 'lw' || split.key === 'lr';
+  const mins = low ? lowCardioMins(split.key, week) : (split.key === 'z2' ? [45, 50, 55, 60][Math.min(4, week) - 1] : [35, 40, 40, 45][Math.min(4, week) - 1]);
+  const cue = split.key === 'lw' ? 'Treadmill about 2.8 mph (4.5 km/h), incline 8–12%. Don’t hold the rails. You can talk, but you’re warm.'
+    : split.key === 'lr' ? 'Rower at a steady pace, or hills outside: hard on the way up, easy on the way down.'
+    : 'Incline walk, bike or rower. You should be able to talk in full sentences but not sing. This is the fat-burning zone.';
   const steps = [
-    { t: 'timer', secs: mins * 60, kicker: 'Steady cardio', title: `${mins} minutes`, cue: 'Incline walk, bike or rower. You should be able to talk in full sentences but not sing. This is the fat-burning zone.', long: true },
+    { t: 'timer', secs: mins * 60, kicker: split.key === 'lw' ? 'Incline walk' : (split.key === 'lr' ? 'Row or hills' : 'Steady cardio'), title: `${mins} minutes`, cue, long: true },
   ];
   if (entry.exercises.some(ex => ex.n === 'Plank')) {
     for (let k = 1; k <= 3; k++) {
@@ -2801,7 +2889,18 @@ function circuitSection(split, workoutEntry, persistWorkout) {
   const roundsDone = Math.min(...moves.map(ex => ex.sets.filter(s => s.done).length));
   const allRounds = roundsDone >= plan.rounds;
   const finDone = finisher ? finisher.sets.some(s => s.done) : true;
-  const amount = n => exInfo(n).kind === 'time' ? '30–45 sec' : '10–12 reps';
+  const amount = n => exReps(n);
+  const lowPlan = split.key === 'la' || split.key === 'lb' || split.key === 'lc';
+  const moveStage = (ex, f, dir) => {
+    const st = liStage(f), to = st + dir;
+    if (to < 1 || to > 3) return;
+    const next = LI_FAMILIES[f].steps[to - 1];
+    if (dir > 0 && !confirm(`Form solid on ${ex.n}? Every rep slow and controlled, no pain?\n\nMove up to stage ${to}: ${next}.`)) return;
+    S.liStage = Object.assign({}, S.liStage, { [f]: to });
+    // swap the move in today's session too, keeping what you've ticked
+    workoutEntry.exercises.forEach(e => { if (e.n === ex.n) e.n = next; });
+    persistWorkout(); toast(dir > 0 ? `Moved up: ${next}` : `Back to ${next}`); render();
+  };
   const setRound = (r, done) => {
     moves.forEach(ex => {
       while (ex.sets.length < plan.rounds) ex.sets.push({ reps: '', weight: '', done: false });
@@ -2824,9 +2923,10 @@ function circuitSection(split, workoutEntry, persistWorkout) {
       el('div', { class: 'card', style: `padding:16px 18px; border-left:4px solid ${split.color};` },
         el('div', { class: 'v5-kicker' }, `How it works · week ${Math.min(4, currentWeek())}`),
         step(1, 'Warm up 5 min, easy on the bike or rower.', roundsDone > 0),
+        lowPlan ? step('★', 'Each move has 3 stages: bodyweight, then bands, then light weights. Only move up when every rep is slow and clean.', false) : null,
         step(2, `Go down the list below: each move once, ${plan.rest}s rest between moves. That’s one round.`, roundsDone > 0),
         step(3, `Do ${plan.rounds} rounds. Rest 1–2 min between rounds and tap “Round done” each time.`, allRounds),
-        finisher ? step(4, `Finish: ${plan.ints} × 30s hard / 60s easy on the ${/Rower/.test(finisher.n) ? 'rower' : 'bike'}.`, finDone) : null,
+        finisher ? step(4, finisher.n === '1 km Treadmill Run' ? 'Finish: straight onto the treadmill and run 1 km at a steady pace.' : `Finish: ${plan.ints} × 30s hard / 60s easy on the ${/Rower/.test(finisher.n) ? 'rower' : 'bike'}.`, finDone) : null,
         step(finisher ? 5 : 4, 'Optional: sauna or steam 10–15 min. Drink water.', false))),
     el('div', { class: 'section' },
       el('div', { class: 'card', style: 'padding:16px 18px;' },
@@ -2842,7 +2942,17 @@ function circuitSection(split, workoutEntry, persistWorkout) {
             el('div', { style: 'flex:0 0 26px; font-size:15px; font-weight:700; color:var(--label2);' }, String(i + 1)),
             el('div', { style: 'flex:1;' },
               el('div', { style: 'font-size:16px; font-weight:600;' }, ex.n),
-              info.alt ? el('div', { style: 'font-size:12px; color:var(--label2); margin-top:2px;' }, 'No kit: ' + info.alt) : null),
+              (() => {
+                const f = lowPlan && liFamilyOf(ex.n);
+                if (!f) return info.alt ? el('div', { style: 'font-size:12px; color:var(--label2); margin-top:2px;' }, 'No kit: ' + info.alt) : null;
+                const st = liStage(f);
+                return el('div', { style: 'display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:5px;' },
+                  el('span', { style: `font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:var(--fill); color:${split.color};` }, `Stage ${st} of 3 · ${liStageName(f, st)}`),
+                  st < 3 ? el('button', { type: 'button', style: `font-size:12px; font-weight:600; color:${split.color}; background:none; border:0; padding:2px 0;`,
+                    onClick: e => { e.stopPropagation(); moveStage(ex, f, 1); } }, 'Form solid? Move up ↑') : el('span', { style: 'font-size:12px; color:var(--label2);' }, 'Top stage. Add weight slowly'),
+                  st > 1 ? el('button', { type: 'button', style: 'font-size:12px; color:var(--label2); background:none; border:0; padding:2px 0;',
+                    onClick: e => { e.stopPropagation(); moveStage(ex, f, -1); } }, 'Too hard? Back ↓') : null);
+              })()),
             el('div', { style: 'font-size:14px; font-weight:600; color:var(--label2); white-space:nowrap;' }, amount(ex.n)));
         }),
         el('div', { class: 'v5-row', style: 'margin-top:14px;' },
@@ -2852,7 +2962,7 @@ function circuitSection(split, workoutEntry, persistWorkout) {
       el('div', { class: 'card', style: 'padding:16px 18px; display:flex; align-items:center; gap:12px;' },
         el('div', { style: 'flex:1;' },
           el('div', { style: 'font-size:16px; font-weight:600;' }, `Finisher · ${finisher.n}`),
-          el('div', { style: 'font-size:13px; color:var(--label2); margin-top:2px;' }, `${plan.ints} × 30s hard / 60s easy (about ${Math.round(plan.ints * 1.5)} min)`),
+          el('div', { style: 'font-size:13px; color:var(--label2); margin-top:2px;' }, finisher.n === '1 km Treadmill Run' ? 'Steady 1 km, about 6–8 min. Try to beat last week’s time.' : `${plan.ints} × 30s hard / 60s easy (about ${Math.round(plan.ints * 1.5)} min)`),
           exInfo(finisher.n).alt ? el('div', { style: 'font-size:12px; color:var(--label2); margin-top:2px;' }, 'No kit: ' + exInfo(finisher.n).alt) : null),
         el('button', { class: 'set-check' + (finDone ? ' done' : ''), type: 'button', 'aria-label': 'Finisher done',
           onClick: () => { finisher.sets[0].done = !finDone; if (!finisher.sets[0].weight) finisher.sets[0].weight = String(Math.round(plan.ints * 1.5)); persistWorkout(); render(); } }, icon('check', 18, 2.2)))) : null,
@@ -2901,7 +3011,9 @@ function trainingView() {
       el('div', { class: 'section' },
         el('div', { class: 'card', style: 'padding:22px;' },
           el('div', { style: 'font-size:14px; color:var(--label2); line-height:1.5;' },
-            'Rest, recover, walk (aim for your step goal). A sauna or steam session is a nice way to recover. Tap a session above to do a workout, or log any cardio below.')
+            'Rest, recover, walk (aim for your step goal). A sauna or steam session is a nice way to recover. Tap a session above to do a workout, or log any cardio below.'),
+          programKeyFor(dateKey) === 'low' ? el('div', { style: 'font-size:14px; color:var(--label2); line-height:1.5; margin-top:10px;' },
+            'Recovery matters as much as training: sleep well and have a little more protein and healthy fats today (eggs, Greek yoghurt, nuts, olive oil, salmon).') : null
         )
       ),
       activityCard(dateKey),
@@ -2912,7 +3024,7 @@ function trainingView() {
   // Build or rehydrate workout entry
   const blankSets = n => {
     const k = ((typeof exInfo === 'function') ? exInfo(n) : (DB.EX[n] || {})).kind;
-    const count = k === 'cardio' ? 1 : (k === 'time' ? (n === 'Mobility & Stretch' ? 1 : 3) : (programKeyFor(dateKey) === 'burn' ? [3, 3, 4, 4][Math.min(4, currentWeek()) - 1] : 3));
+    const count = k === 'cardio' ? 1 : (k === 'time' ? (n === 'Mobility & Stretch' ? 1 : 3) : (isGuided(programKeyFor(dateKey)) ? [3, 3, 4, 4][Math.min(4, currentWeek()) - 1] : 3));
     return Array.from({ length: count }, () => ({ reps: '', weight: '', done: false }));
   };
   if (workoutEntry && workoutEntry.day && workoutEntry.day !== split.name) workoutEntry = null;
@@ -2962,7 +3074,7 @@ function trainingView() {
         el('div', { class: 'ex-head-left' },
           el('div', { class: 'ex-name' }, ex.n),
           el('div', { class: 'ex-meta' },
-            programKeyFor(dateKey) === 'burn'
+            isGuided(programKeyFor(dateKey))
               ? `${doneSets}/${ex.sets.length} done · ${exPrescription(ex.n, currentWeek())}`
               : `${doneSets}/${ex.sets.length} sets · ${info.muscles || ''}`)
         ),
@@ -3030,7 +3142,7 @@ function trainingView() {
 
   const total = workoutEntry.exercises.reduce((a, ex) => a + ex.sets.length, 0);
   const done = workoutEntry.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0);
-  const isCircuit = programKeyFor(dateKey) === 'burn' && split.kind === 'circuit';
+  const isCircuit = isGuided(programKeyFor(dateKey)) && split.kind === 'circuit';
   const cPlan = isCircuit ? circuitPlan(currentWeek()) : null;
   const cRounds = isCircuit ? Math.min(...workoutEntry.exercises.filter(ex => exInfo(ex.n).kind !== 'cardio').map(ex => ex.sets.filter(s => s.done).length)) : 0;
 
@@ -3060,14 +3172,14 @@ function trainingView() {
         )
       )
     ),
-    isCircuit ? null : (programKeyFor(dateKey) === 'burn'
+    isCircuit ? null : (isGuided(programKeyFor(dateKey))
       ? el('div', { class: 'section' },
           el('div', { class: 'card', style: `padding:14px 18px; border-left:4px solid ${split.color};` },
             el('div', { class: 'v5-kicker' }, 'How to run it'),
             el('div', { style: 'font-size:14px; line-height:1.5; margin-top:4px;' }, burnPrescription(split, currentWeek()))))
       : null),
     ...(isCircuit ? circuitSection(split, workoutEntry, persistWorkout) : []),
-    (programKeyFor(dateKey) === 'burn' && split.kind === 'cardio') ? (() => {
+    (isGuided(programKeyFor(dateKey)) && split.kind === 'cardio') ? (() => {
       UI._coachCtx = { split, entry: workoutEntry,
         completeAll: mins => { workoutEntry.exercises.forEach(ex => ex.sets.forEach(s => { s.done = true; })); const z = workoutEntry.exercises.find(ex => exInfo(ex.n).kind === 'cardio'); if (z && !z.sets[0].weight) z.sets[0].weight = String(mins); persistWorkout(); render(); } };
       const cdone = workoutEntry.completed;
@@ -3274,7 +3386,7 @@ function targetsEditor(saveAndRefresh) {
 
 function weekSplitOverview() {
   const P = programFor(new Date());
-  if (P === DB.PROGRAMS.burn) {
+  if (P === DB.PROGRAMS.burn || P === DB.PROGRAMS.low) {
     const today = parseDateKey(localDateKey());
     const mon = addDays(today, -((today.getDay() + 6) % 7));
     return el('div', { class: 'section' },
@@ -3291,7 +3403,14 @@ function weekSplitOverview() {
           el('div', { style: 'flex:1; font-size:15px; font-weight:' + (isT ? '700' : '500') + ';' }, s ? (s.title || s.name) : 'Rest'),
           el('div', { style: 'font-size:13px; font-weight:600; color:' + (done ? 'var(--green)' : 'var(--label2)') + ';' },
             done ? '✓ Done' : (isT ? 'Today' : (past && s ? 'Missed' : ''))));
-      })));
+      })),
+      (() => {
+        const blk = currentBlock(); if (!blk) return null;
+        const other = blk.program === 'low' ? 'burn' : 'low';
+        return el('button', { type: 'button', class: 'add-btn', style: 'margin-top:8px;',
+          onClick: () => { if (confirm(`Switch this block to the ${DB.PROGRAMS[other].name} plan? Your week count and logs stay as they are.`)) { blk.program = other; saveState(); render(); } } },
+          `Plan: ${blk.program === 'low' ? 'Low-impact' : 'Fat-burn'}. Switch to ${other === 'low' ? 'Low-impact' : 'Fat-burn'}`);
+      })());
   }
   return el('div', { class: 'section' },
     el('div', { class: 'section-hdr' }, programFor(new Date()).name),
@@ -4991,7 +5110,7 @@ function modalSheet() {
     if (m.goalKg == null || m._autoGoal) { m.goalKg = suggested; m._autoGoal = true; }
     m.program = m.program || 'burn';
     const progSeg = el('div', { class: 'v5-seg', style: 'margin:6px 0 10px;' },
-      ...[['burn', 'Fat-burn (5 days)'], ['ppl', 'Push/Pull/Legs (3)']].map(([k, l]) => el('button', { type: 'button', class: m.program === k ? 'on' : '',
+      ...[['burn', 'Fat-burn'], ['low', 'Low-impact'], ['ppl', 'Push/Pull/Legs']].map(([k, l]) => el('button', { type: 'button', class: m.program === k ? 'on' : '',
         onClick: () => { m.program = k; render(); } }, l)));
     const seg = el('div', { class: 'v5-seg', style: 'margin:6px 0 10px;' },
       ...[4, 8, 12].map(w => el('button', { type: 'button', class: m.weeks === w ? 'on' : '',
