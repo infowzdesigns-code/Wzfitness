@@ -1043,13 +1043,13 @@ function buildCircuitSteps(split, entry, week) {
       g.moves.forEach((ex, mi) => {
         const timed = exInfo(ex.n).kind === 'time';
         steps.push({ t: timed ? 'timer' : 'work', secs: timed ? (ex.n === 'Dead Hang' ? 30 : 40) : 0, n: ex.n,
-          kicker: multi ? `${stationTitle(g.st)} · round ${r} of ${plan.rounds}${g.moves.length > 1 ? ` · move ${mi + 1} of ${g.moves.length}` : ''}` : `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${g.moves.length}`,
+          kicker: multi ? `${stationTitle(g.st)} · set ${r} of ${plan.rounds}${g.moves.length > 1 ? ` · move ${mi + 1} of ${g.moves.length}` : ''}` : `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${g.moves.length}`,
           title: ex.n, reps: timed ? null : exReps(ex.n), cue: coachCue(ex.n, 0), cue2: coachCue(ex.n, 1), alt: exInfo(ex.n).alt });
         if (mi < g.moves.length - 1) steps.push({ t: 'timer', secs: plan.rest, kicker: 'Rest', title: 'Breathe', rest: true, nextOf: true });
       });
       steps.push({ t: 'action', act: 'stationRound', names: g.moves.map(m => m.n), r });
       const restS = multi ? 60 : 90;
-      if (r < plan.rounds) steps.push({ t: 'timer', secs: restS, kicker: `Round ${r} done 💪`, title: `Rest ${restS} seconds`, cue: multi ? 'Stay where you are. Next round is the same moves.' : 'Sip water. Shake out your legs. Next round starts the same way.', rest: true, nextOf: true });
+      if (r < plan.rounds) steps.push({ t: 'timer', secs: restS, kicker: multi ? `Set ${r} done 💪` : `Round ${r} done 💪`, title: `Rest ${restS} seconds`, cue: multi ? 'Stay where you are. Next set is the same moves.' : 'Sip water. Shake out your legs. Next round starts the same way.', rest: true, nextOf: true });
     }
   });
   if (fin && !fin.sets.some(s => s.done) && fin.n === '1 km Treadmill Run') {
@@ -1684,11 +1684,9 @@ function stationRoundsCard(W, col) {
   return el('div', { class: 'list' }, ...groups.map(g => el('div', { class: 'row', style: 'display:block; padding:12px 16px;' },
     el('div', { style: 'display:flex; align-items:baseline; justify-content:space-between;' },
       el('div', { style: 'font-size:17px; font-weight:600;' }, stationTitle(g.st)),
-      el('div', { style: 'font-size:13px; color:var(--label2);' }, g.done >= R ? 'Done' : `Round ${g.done + 1} of ${R} · ${g.moves.length} move${g.moves.length > 1 ? 's' : ''}`)),
-    el('div', { class: 'rounds', style: `--c:${col}; margin:10px 0;` }, ...Array.from({ length: R }, (_, i) => el('i', { class: i < g.done ? 'on' : '' }))),
-    el('div', { style: 'display:flex; gap:10px;' },
-      g.done > 0 ? el('button', { type: 'button', class: 'btn gray small', onClick: () => W.setStationRound(g.moves.map(m => m.n), g.done - 1) }, 'Undo') : null,
-      g.done < R ? el('button', { type: 'button', class: 'btn small', style: `flex:1; background:${col}`, onClick: () => { const r = g.done + 1; W.setStationRound(g.moves.map(m => m.n), r); toast(r >= R ? `${stationTitle(g.st)} done. On to the next spot` : `Round ${r} done. Rest a minute`); } }, `Round ${g.done + 1} done`) : null))));
+      el('div', { style: 'font-size:13px; color:var(--label2);' }, g.done >= R ? 'All sets done' : `Set ${g.done + 1} of ${R} · ${g.moves.length} move${g.moves.length > 1 ? 's' : ''}`)),
+    el('div', { style: 'display:flex; gap:8px; margin:10px 0;' }, ...Array.from({ length: R }, (_, i) => el('button', { type: 'button', class: 'btn small ' + (i < g.done ? '' : 'gray'), style: `flex:1; ${i < g.done ? 'background:' + col : ''}`, 'aria-label': `Set ${i + 1} ${i < g.done ? 'done, tap to undo' : 'not done'}`,
+      onClick: () => { const r = i < g.done ? i : i + 1; W.setStationRound(g.moves.map(m => m.n), r); if (r > i) toast(r >= R ? `${stationTitle(g.st)}: all sets done. On to the next spot` : `Set ${r} done. Rest a minute`); } }, i < g.done ? sf('check', 16, 3) : `Set ${i + 1}`))))));
 }
 /* ═══════════════════ WZ Fitness 7 — rebuilt from scratch (Nov 2026) ═══════════════════
    Same saved data as v6 (localStorage key wz-data-<user>-state, version 4), so nothing is lost
@@ -2216,7 +2214,7 @@ function workoutView() {
           W.done ? sf('check', 20, 2.6) : sf('play', 20), W.done ? 'Done · go again' : (W.circuit && W.roundsDone > 0 ? `Continue with coach · round ${W.roundsDone + 1}` : 'Start with coach')),
         el('div', { class: 'footnote', style: 'text-align:center;' }, W.circuit ? 'Talks you through every move, times your rests and beeps when it’s time to go.' : 'A timer for your cardio, then core and a stretch.')));
     }
-    if (W.circuit && stationGroups(W.moves).length > 1) kids.push(section('Rounds', null, stationRoundsCard(W, col)));
+    if (W.circuit && stationGroups(W.moves).length > 1) kids.push(section('Sets', null, stationRoundsCard(W, col)));
     else if (W.circuit) {
       kids.push(section('Rounds', null, el('div', { class: 'card pad' },
         el('div', { style: 'display:flex; align-items:baseline; justify-content:space-between;' },
