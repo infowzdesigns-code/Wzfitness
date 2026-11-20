@@ -1686,8 +1686,30 @@ function stationRoundsCard(W, col) {
       el('div', { style: 'font-size:17px; font-weight:600;' }, stationTitle(g.st)),
       el('div', { style: 'font-size:13px; color:var(--label2);' }, g.done >= R ? 'All sets done' : `Set ${g.done + 1} of ${R} · ${g.moves.length} move${g.moves.length > 1 ? 's' : ''}`)),
     el('div', { style: 'display:flex; gap:8px; margin:10px 0;' }, ...Array.from({ length: R }, (_, i) => el('button', { type: 'button', class: 'btn small ' + (i < g.done ? '' : 'gray'), style: `flex:1; ${i < g.done ? 'background:' + col : ''}`, 'aria-label': `Set ${i + 1} ${i < g.done ? 'done, tap to undo' : 'not done'}`,
-      onClick: () => { const r = i < g.done ? i : i + 1; W.setStationRound(g.moves.map(m => m.n), r); if (r > i) toast(r >= R ? `${stationTitle(g.st)}: all sets done. On to the next spot` : `Set ${r} done. Rest a minute`); } }, i < g.done ? sf('check', 16, 3) : `Set ${i + 1}`))))));
+      onClick: () => { const r = i < g.done ? i : i + 1; W.setStationRound(g.moves.map(m => m.n), r); if (r > i) { if (r >= R) { restStop(); toast(`${stationTitle(g.st)}: all sets done. On to the next spot`); } else restStart(60, `Set ${r} done · rest, then set ${r + 1}`); } } }, i < g.done ? sf('check', 16, 3) : `Set ${i + 1}`))))));
 }
+/* Rest timer after ticking a set off on the Workout tab. */
+const REST = { t: null, end: 0 };
+function restStart(secs, label) {
+  restStop();
+  coachBeep(660, 1);
+  REST.end = Date.now() + secs * 1000;
+  const box = el('div', { id: 'rest-pill', style: 'position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom) + 92px); z-index:60; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:18px; background:#1C1C1E; border:1px solid rgba(255,255,255,.12); box-shadow:0 8px 30px rgba(0,0,0,.5); color:#fff;' },
+    el('div', { style: 'flex:1;' }, el('div', { style: 'font-size:13px; color:var(--label2);' }, label || 'Rest'), el('div', { class: 'num', id: 'rest-left', style: 'font-size:28px; font-weight:700; color:#30D158;' }, '')),
+    el('button', { type: 'button', class: 'btn small gray', onClick: () => { REST.end += 30000; tick(); } }, '+30s'),
+    el('button', { type: 'button', class: 'btn small', style: 'background:#30D158; color:#000;', onClick: () => restStop() }, 'Skip'));
+  document.body.appendChild(box);
+  const tick = () => {
+    if (UI.tab !== 'workout') return restStop();
+    const left = Math.max(0, Math.ceil((REST.end - Date.now()) / 1000));
+    const n = document.getElementById('rest-left'); if (n) n.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    if (left <= 3 && left > 0 && left !== REST.last) coachBeep(660, 120);
+    REST.last = left;
+    if (left <= 0) { coachBeep(1046, 400); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} restStop(); toast('Rest over. Next set!'); }
+  };
+  tick(); REST.t = setInterval(tick, 250);
+}
+function restStop() { clearInterval(REST.t); REST.t = null; const b = document.getElementById('rest-pill'); if (b) b.remove(); }
 /* ═══════════════════ WZ Fitness 7 — rebuilt from scratch (Nov 2026) ═══════════════════
    Same saved data as v6 (localStorage key wz-data-<user>-state, version 4), so nothing is lost
    and the previous version can still read everything this one writes.
