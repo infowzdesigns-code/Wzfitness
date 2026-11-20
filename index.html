@@ -1710,6 +1710,47 @@ function restStart(secs, label) {
   tick(); REST.t = setInterval(tick, 250);
 }
 function restStop() { clearInterval(REST.t); REST.t = null; const b = document.getElementById('rest-pill'); if (b) b.remove(); }
+/* ═════════ v7.2: strength progress from logged weights ═════════ */
+function liftKg(s) { const n = parseFloat(String(s.weight || '').replace(',', '.')); return n > 0 && n < 400 ? n : 0; }
+function strengthHistory() {
+  const by = {};
+  Object.keys(S.log).sort().forEach(dk => {
+    const w = S.log[dk] && S.log[dk].workout; if (!w || !w.exercises) return;
+    w.exercises.forEach(ex => {
+      const k = exInfo(ex.n).kind; if (k === 'cardio' || k === 'time') return;
+      const sets = ex.sets.filter(s => liftKg(s));
+      if (!sets.length) return;
+      (by[ex.n] = by[ex.n] || []).push({ date: dk, kg: Math.max(...sets.map(liftKg)), sets: sets.map(s => ({ kg: liftKg(s), reps: s.reps })) });
+    });
+  });
+  return by;
+}
+function lastLift(n, beforeDk) {
+  const h = (strengthHistory()[n] || []).filter(x => x.date < beforeDk);
+  return h.length ? h[h.length - 1] : null;
+}
+function setsText(sets) { return sets.map(s => `${fmt1(s.kg).replace(/\.0$/, '')} kg${s.reps ? ' × ' + s.reps : ''}`).join(', '); }
+function strengthSection() {
+  const by = strengthHistory();
+  const names = Object.keys(by).sort((a, b) => by[b][by[b].length - 1].date.localeCompare(by[a][by[a].length - 1].date));
+  const body = names.length
+    ? el('div', { class: 'list' }, ...names.map(n => {
+        const h = by[n], first = h[0], last = h[h.length - 1], d = last.kg - first.kg;
+        const sub = h.length > 1 ? (Math.abs(d) < 0.05 ? `Same as ${dmy(parseDateKey(first.date))}` : `${d > 0 ? 'Up' : 'Down'} ${fmt1(Math.abs(d)).replace(/\.0$/, '')} kg since ${dmy(parseDateKey(first.date))}`) : `First logged ${friendlyDay(last.date)}`;
+        return row({ title: n, sub, val: `${fmt1(last.kg).replace(/\.0$/, '')} kg`, tile: { bg: 'var(--purple)', icon: 'flame' }, chev: true, onClick: () => openSheet('strength', { n }) });
+      }))
+    : el('div', { class: 'card pad', style: 'font-size:15px; line-height:21px; color:var(--label2);' }, 'Type the weight you use in a move (tap it on the Workout tab, then fill in kg and reps). Your heaviest set each session shows up here as a chart.');
+  return section('Strength', null, body, names.length ? el('div', { class: 'footnote' }, 'Your heaviest set each session. Tap a move to see the chart.') : null);
+}
+function strengthSheet(m) {
+  const h = strengthHistory()[m.n] || [];
+  return { title: m.n, tall: true, body: [
+    el('div', { class: 'section' }, el('div', { class: 'card pad' }, weightChart(h.map(x => ({ date: x.date, kg: x.kg }))))),
+    h.length ? el('div', { class: 'section' }, el('div', { class: 'sec-cap' }, 'Sessions'), el('div', { class: 'list' },
+      ...h.slice().reverse().map(x => row({ title: friendlyDay(x.date), sub: setsText(x.sets), val: `${fmt1(x.kg).replace(/\.0$/, '')} kg` })))) : null,
+    el('div', { class: 'footnote', style: 'padding:12px 20px' }, 'Add a little weight when every rep of every set feels clean. Small steps (1–2 kg) add up fast.'),
+  ] };
+}
 /* ═══════════════════ WZ Fitness 7 — rebuilt from scratch (Nov 2026) ═══════════════════
    Same saved data as v6 (localStorage key wz-data-<user>-state, version 4), so nothing is lost
    and the previous version can still read everything this one writes.
@@ -2349,6 +2390,7 @@ function progressView() {
     weightChart(pts, blk && !showAll ? blk.goalKg : S.profile.goalWeightKg)),
     trendFootnote()));
   kids.push(weighInList());
+  kids.push(strengthSection());
   kids.push(goalSection());
   kids.push(scanSection());
   kids.push(bodySection());
@@ -2688,6 +2730,8 @@ const SHEET_TYPES = {
       info.alt ? el('div', { class: 'section' }, el('div', { class: 'sec-cap' }, 'No equipment?'), el('div', { class: 'card pad', style: 'font-size:15px; line-height:21px;' }, info.alt)) : null,
       info.yt ? el('div', { class: 'section' }, el('div', { class: 'list' }, el('a', { class: 'row', href: info.yt, target: '_blank', rel: 'noopener' },
         el('div', { class: 'icon-tile', style: 'background:var(--red)' }, sf('play', 16)), el('div', { class: 'row-main' }, el('div', { class: 'row-title', style: 'color:var(--blue)' }, 'Watch a form video')), el('span', { class: 'chev' }, sf('chevR', 14, 2.6))))) : null,
+      (() => { if (kind === 'cardio' || kind === 'time') return null; const lt = lastLift(ex.n, m.dk), n = (strengthHistory()[ex.n] || []).length;
+        return lt || n ? el('div', { class: 'section' }, el('div', { class: 'list' }, row({ title: lt ? `Last time: ${setsText(lt.sets)}` : 'Your progress', sub: lt ? `${friendlyDay(lt.date)} · tap to see your chart` : 'Tap to see your chart', tile: { bg: 'var(--purple)', icon: 'flame' }, chev: true, onClick: () => openSheet('strength', { n: ex.n }) }))) : null; })(),
       el('div', { class: 'section' }, el('div', { class: 'sec-cap' }, W.circuit ? 'Log weights (optional)' : 'Sets'),
         el('div', { class: 'card pad' }, el('div', { class: 'sets' }, ...setRows),
           el('button', { type: 'button', class: 'btn gray block', style: 'height:40px; margin-top:12px; font-size:15px;', onClick: () => { ex.sets.push({ reps: '', weight: '', done: false }); W.save(); refreshSheet(S0); render(); } }, sf('plus', 16, 2.6), 'Add set'))),
@@ -2742,6 +2786,7 @@ const SHEET_TYPES = {
     ] };
   },
   burn(m) { return burnSheet(m); },
+  strength(m) { return strengthSheet(m); },
   healthpaste(m, S0) {
     const why = {
       blocked: 'The app couldn’t read the clipboard by itself (on iPhone, tap Paste when the little bubble appears). Or run your Shortcut, long-press the box above, tap Paste, then Import.',
