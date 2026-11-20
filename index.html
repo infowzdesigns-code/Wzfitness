@@ -1615,6 +1615,50 @@ function burnSheet(m) {
     el('div', { class: 'footnote', style: 'padding:12px 20px' }, `An estimate from standard exercise values for your weight (${fmt1(kg)} kg) and the time each part takes. It counts only the extra calories from exercise, like Apple’s Move ring, so the two are roughly comparable. If you type your own calories when logging cardio (from the machine or a Watch), the app uses those.`),
   ] };
 }
+
+/* ═════════ v7.2: gym order — moves grouped by where they're done ═════════
+   Free-weight area (dumbbells, kettlebell, bench, bands, floor) first, then the cable stack, then the bars.
+   Inside the free-weight block legs and upper body take turns, core fills the gaps, so the circuit still works. */
+const STATION_OF = {
+  'Inverted Row': 'bar', 'Dead Hang': 'bar', 'Hanging Knee Raises': 'bar', 'Negative Pull-Ups': 'bar', 'Assisted Pull-Ups': 'bar',
+  'Seated Cable Row': 'cable', 'Lat Pulldown': 'cable', 'Cable Row': 'cable', 'Face Pulls': 'cable', 'Tricep Pushdown': 'cable',
+};
+const STATION_LABEL = { free: 'mat and dumbbell area', cable: 'cable machine', bar: 'bar' };
+function stationOf(n) { return STATION_OF[n] || 'free'; }
+function regionOf(n) {
+  if (/plank|mountain|knee raise|hang/i.test(n)) return 'core';
+  if (/squat|lunge|deadlift|bridge|good morning|step-up|swing|thruster|leg press|calf/i.test(n)) return 'lower';
+  return 'upper';
+}
+function stationOrder(exs) {
+  const out = [];
+  for (const st of ['free', 'cable', 'bar']) {
+    const group = exs.filter(ex => stationOf(ex.n) === st);
+    if (st !== 'free') { out.push(...group); continue; }
+    const q = { lower: [], upper: [], core: [] };
+    group.forEach(ex => q[regionOf(ex.n)].push(ex));
+    let last = group.length && regionOf(group[0].n) === 'upper' ? 'lower' : null;  // keep the session's first move first
+    while (q.lower.length || q.upper.length || q.core.length) {
+      let pick = last === 'lower' ? (q.upper.length ? 'upper' : q.core.length && q.lower.length ? 'core' : 'lower')
+               : last === 'upper' ? (q.lower.length ? 'lower' : q.core.length && q.upper.length ? 'core' : 'upper')
+               : (q.lower.length ? 'lower' : q.upper.length ? 'upper' : 'core');
+      if (!q[pick].length) pick = ['lower', 'upper', 'core'].find(k => q[k].length);
+      out.push(q[pick].shift()); last = pick;
+    }
+  }
+  return out;
+}
+function gymOrderEntry(entry) {
+  const isMove = ex => exInfo(ex.n).kind !== 'cardio' && !ex.added;
+  const moves = stationOrder(entry.exercises.filter(isMove));
+  let i = 0;
+  entry.exercises = entry.exercises.map(ex => isMove(ex) ? moves[i++] : ex);
+  return entry;
+}
+function gymOrderNote(W) {
+  const st = []; W.moves.forEach(ex => { const s = stationOf(ex.n); if (!st.includes(s)) st.push(s); });
+  return st.length > 1 ? `In gym order so you stay in one spot: ${st.map(s => STATION_LABEL[s]).join(', then ')}.` : '';
+}
 /* ═══════════════════ WZ Fitness 7 — rebuilt from scratch (Nov 2026) ═══════════════════
    Same saved data as v6 (localStorage key wz-data-<user>-state, version 4), so nothing is lost
    and the previous version can still read everything this one writes.
@@ -1872,6 +1916,7 @@ function workoutFor(dk) {
     const extras = entry.exercises.filter(e => !split.exercises.includes(e.n));
     entry = { ...entry, exercises: split.exercises.map(n => entry.exercises.find(e => e.n === n) || { n, sets: blankSets(n, dk) }).concat(extras) };
   }
+  if (isGuided(programKeyFor(dk)) && split.kind === 'circuit') gymOrderEntry(entry);
   const W = { dk, split, entry, guided: isGuided(programKeyFor(dk)) };
   W.circuit = W.guided && split.kind === 'circuit';
   W.cardio = W.guided && split.kind === 'cardio';
@@ -2149,7 +2194,7 @@ function workoutView() {
     items.forEach((ex, i) => list.appendChild(moveRow(W, ex, i)));
     if (W.circuit && W.finisher) list.appendChild(finisherRow(W));
     kids.push(section(W.circuit ? 'Moves' : 'Exercises', null, list,
-      W.circuit ? el('div', { class: 'footnote' }, 'Each round: every move once, top to bottom. Tap a move for form tips, the no-kit swap and stages.') : null));
+      W.circuit ? el('div', { class: 'footnote' }, ['Each round: every move once, top to bottom.', gymOrderNote(W), 'Tap a move for form tips, the no-kit swap and stages.'].filter(Boolean).join(' ')) : null));
     // Added extras
     const extras = W.entry.exercises.filter(ex => ex.added);
     kids.push(section(extras.length ? 'Extras' : null, null, el('div', { class: 'list' },
