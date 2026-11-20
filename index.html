@@ -1030,17 +1030,28 @@ function buildCircuitSteps(split, entry, week) {
   const fin = entry.exercises.find(ex => exInfo(ex.n).kind === 'cardio');
   const done = Math.min(...moves.map(ex => ex.sets.filter(s => s.done).length));
   const steps = [];
-  if (done === 0) steps.push({ t: 'timer', secs: 300, kicker: 'Warm-up', title: '5 min easy', cue: 'Bike or rower at an easy pace. Breathe through your nose and get a light sweat.', skip: 'Skip warm-up' });
-  for (let r = done + 1; r <= plan.rounds; r++) {
-    moves.forEach((ex, mi) => {
-      const timed = exInfo(ex.n).kind === 'time';
-      steps.push({ t: timed ? 'timer' : 'work', secs: timed ? (ex.n === 'Dead Hang' ? 30 : 40) : 0, n: ex.n, kicker: `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${moves.length}`,
-        title: ex.n, reps: timed ? null : exReps(ex.n), cue: coachCue(ex.n, 0), cue2: coachCue(ex.n, 1), alt: exInfo(ex.n).alt });
-      if (mi < moves.length - 1) steps.push({ t: 'timer', secs: plan.rest, kicker: 'Rest', title: 'Breathe', rest: true, nextOf: true });
-    });
-    steps.push({ t: 'action', act: 'round', r });
-    if (r < plan.rounds) steps.push({ t: 'timer', secs: 90, kicker: `Round ${r} done 💪`, title: 'Rest 90 seconds', cue: 'Sip water. Shake out your legs. Next round starts the same way.', rest: true, nextOf: true });
-  }
+  if (!moves.some(ex => ex.sets.some(s => s.done))) steps.push({ t: 'timer', secs: 300, kicker: 'Warm-up', title: '5 min easy', cue: 'Bike or rower at an easy pace. Breathe through your nose and get a light sweat.', skip: 'Skip warm-up' });
+  // v7.2: station by station. All rounds at one spot (e.g. the dumbbells), then move on.
+  const groups = stationGroups(moves);
+  const multi = groups.length > 1;
+  let first = true;
+  groups.forEach(g => {
+    if (g.done >= plan.rounds) return;
+    if (!first) steps.push({ t: 'timer', secs: 60, kicker: `${stationTitle(groups[groups.indexOf(g) - 1].st)} done 💪`, title: `Go to the ${g.label}`, cue: 'Sip water on the way.', rest: true, nextOf: true });
+    first = false;
+    for (let r = g.done + 1; r <= plan.rounds; r++) {
+      g.moves.forEach((ex, mi) => {
+        const timed = exInfo(ex.n).kind === 'time';
+        steps.push({ t: timed ? 'timer' : 'work', secs: timed ? (ex.n === 'Dead Hang' ? 30 : 40) : 0, n: ex.n,
+          kicker: multi ? `${stationTitle(g.st)} · round ${r} of ${plan.rounds}${g.moves.length > 1 ? ` · move ${mi + 1} of ${g.moves.length}` : ''}` : `Round ${r} of ${plan.rounds} · move ${mi + 1} of ${g.moves.length}`,
+          title: ex.n, reps: timed ? null : exReps(ex.n), cue: coachCue(ex.n, 0), cue2: coachCue(ex.n, 1), alt: exInfo(ex.n).alt });
+        if (mi < g.moves.length - 1) steps.push({ t: 'timer', secs: plan.rest, kicker: 'Rest', title: 'Breathe', rest: true, nextOf: true });
+      });
+      steps.push({ t: 'action', act: 'stationRound', names: g.moves.map(m => m.n), r });
+      const restS = multi ? 60 : 90;
+      if (r < plan.rounds) steps.push({ t: 'timer', secs: restS, kicker: `Round ${r} done 💪`, title: `Rest ${restS} seconds`, cue: multi ? 'Stay where you are. Next round is the same moves.' : 'Sip water. Shake out your legs. Next round starts the same way.', rest: true, nextOf: true });
+    }
+  });
   if (fin && !fin.sets.some(s => s.done) && fin.n === '1 km Treadmill Run') {
     steps.push({ t: 'timer', secs: 60, kicker: 'Finisher next', title: 'Get on the treadmill', cue: 'Straight from your push-ups: 1 km at a steady pace you can hold.', rest: true });
     steps.push({ t: 'work', n: fin.n, kicker: 'Finisher', title: 'Run 1 km', reps: 'Steady, about 6–8 min', cue: coachCue(fin.n, 1), cue2: coachCue(fin.n, 2), alt: exInfo(fin.n).alt });
@@ -1092,6 +1103,7 @@ function coachEnter() {
   if (s.t === 'action') {
     const c = COACH.ctx;
     if (s.act === 'round') c.setRound(s.r);
+    if (s.act === 'stationRound') c.setStationRound(s.names, s.r);
     if (s.act === 'finisher') c.finish(s.mins);
     if (s.act === 'all') c.completeAll(s.mins);
     COACH.i++; return coachEnter();
@@ -1564,7 +1576,7 @@ function workoutBurn(dk) {
   if (W.circuit) {
     const f = W.finisher, run = f && f.n === '1 km Treadmill Run';
     const finPlan = f ? (run ? 8 : Math.round(W.plan.ints * 1.5)) : 0;
-    const circMins = Math.max(10, (W.split.mins || 45) - finPlan) * Math.min(1, W.roundsDone / W.plan.rounds);
+    const circMins = Math.max(10, (W.split.mins || 45) - finPlan) * (W.moves.length ? W.moves.reduce((t, ex) => t + Math.min(1, ex.sets.filter(x => x.done).length / W.plan.rounds), 0) / W.moves.length : 0);
     add({ kcal: kcalFor(programKeyFor(dk) === 'burn' ? 6.0 : 5.0, circMins), mins: circMins });
     if (f && W.finDone) { const m = Number(f.sets[0].weight) || finPlan; add({ kcal: kcalFor(BURN_MET[f.n] || 8, m), mins: m }); }
     W.entry.exercises.filter(ex => ex.added).forEach(ex => add(exerciseBurn(ex)));
@@ -1657,7 +1669,26 @@ function gymOrderEntry(entry) {
 }
 function gymOrderNote(W) {
   const st = []; W.moves.forEach(ex => { const s = stationOf(ex.n); if (!st.includes(s)) st.push(s); });
-  return st.length > 1 ? `In gym order so you stay in one spot: ${st.map(s => STATION_LABEL[s]).join(', then ')}.` : '';
+  return st.length > 1 ? `Do every round at one spot before you move on: ${st.map(s => STATION_LABEL[s]).join(', then ')}.` : '';
+}
+/* Stations: finish every round at one station, then move on (busy gym: keep your spot). */
+function stationGroups(moves) {
+  const out = [];
+  moves.forEach(ex => { const st = stationOf(ex.n); let g = out.find(x => x.st === st); if (!g) out.push(g = { st, label: STATION_LABEL[st], moves: [] }); g.moves.push(ex); });
+  out.forEach(g => { g.done = Math.min(...g.moves.map(ex => ex.sets.filter(s => s.done).length)); });
+  return out;
+}
+function stationTitle(st) { const l = STATION_LABEL[st]; return l.charAt(0).toUpperCase() + l.slice(1); }
+function stationRoundsCard(W, col) {
+  const groups = stationGroups(W.moves), R = W.plan.rounds;
+  return el('div', { class: 'list' }, ...groups.map(g => el('div', { class: 'row', style: 'display:block; padding:12px 16px;' },
+    el('div', { style: 'display:flex; align-items:baseline; justify-content:space-between;' },
+      el('div', { style: 'font-size:17px; font-weight:600;' }, stationTitle(g.st)),
+      el('div', { style: 'font-size:13px; color:var(--label2);' }, g.done >= R ? 'Done' : `Round ${g.done + 1} of ${R} · ${g.moves.length} move${g.moves.length > 1 ? 's' : ''}`)),
+    el('div', { class: 'rounds', style: `--c:${col}; margin:10px 0;` }, ...Array.from({ length: R }, (_, i) => el('i', { class: i < g.done ? 'on' : '' }))),
+    el('div', { style: 'display:flex; gap:10px;' },
+      g.done > 0 ? el('button', { type: 'button', class: 'btn gray small', onClick: () => W.setStationRound(g.moves.map(m => m.n), g.done - 1) }, 'Undo') : null,
+      g.done < R ? el('button', { type: 'button', class: 'btn small', style: `flex:1; background:${col}`, onClick: () => { const r = g.done + 1; W.setStationRound(g.moves.map(m => m.n), r); toast(r >= R ? `${stationTitle(g.st)} done. On to the next spot` : `Round ${r} done. Rest a minute`); } }, `Round ${g.done + 1} done`) : null))));
 }
 /* ═══════════════════ WZ Fitness 7 — rebuilt from scratch (Nov 2026) ═══════════════════
    Same saved data as v6 (localStorage key wz-data-<user>-state, version 4), so nothing is lost
@@ -1938,6 +1969,13 @@ function workoutFor(dk) {
     });
     W.save(); render();
   };
+  W.setStationRound = (names, r) => {
+    W.moves.filter(ex => names.includes(ex.n)).forEach(ex => {
+      while (ex.sets.length < W.plan.rounds) ex.sets.push({ reps: '', weight: '', done: false });
+      ex.sets.forEach((s, i) => { s.done = i < r; });
+    });
+    W.save(); render();
+  };
   W.finish = mins => { if (W.finisher) { W.finisher.sets[0].done = true; W.finisher.sets[0].weight = W.finisher.sets[0].weight || String(mins); W.save(); render(); } };
   W.completeAll = mins => { entry.exercises.forEach(ex => ex.sets.forEach(s => { s.done = true; })); const z = entry.exercises.find(ex => exInfo(ex.n).kind === 'cardio'); if (z && !z.sets[0].weight) z.sets[0].weight = String(mins); W.save(); render(); };
   W.subtitle = W.circuit
@@ -1946,7 +1984,7 @@ function workoutFor(dk) {
   return W;
 }
 function startCoach(W) {
-  UI._coachCtx = { split: W.split, entry: W.entry, setRound: W.setRound, finish: W.finish, completeAll: W.completeAll };
+  UI._coachCtx = { split: W.split, entry: W.entry, setRound: W.setRound, setStationRound: W.setStationRound, finish: W.finish, completeAll: W.completeAll };
   if (W.guided) coachStart();
   else { UI.tab = 'workout'; UI.selectedDate = W.dk; render(); }
 }
@@ -2178,7 +2216,8 @@ function workoutView() {
           W.done ? sf('check', 20, 2.6) : sf('play', 20), W.done ? 'Done · go again' : (W.circuit && W.roundsDone > 0 ? `Continue with coach · round ${W.roundsDone + 1}` : 'Start with coach')),
         el('div', { class: 'footnote', style: 'text-align:center;' }, W.circuit ? 'Talks you through every move, times your rests and beeps when it’s time to go.' : 'A timer for your cardio, then core and a stretch.')));
     }
-    if (W.circuit) {
+    if (W.circuit && stationGroups(W.moves).length > 1) kids.push(section('Rounds', null, stationRoundsCard(W, col)));
+    else if (W.circuit) {
       kids.push(section('Rounds', null, el('div', { class: 'card pad' },
         el('div', { style: 'display:flex; align-items:baseline; justify-content:space-between;' },
           el('div', { style: 'font-size:20px; font-weight:600; letter-spacing:0.38px;' }, W.roundsDone >= W.plan.rounds ? 'All rounds done' : `Round ${W.roundsDone + 1} of ${W.plan.rounds}`),
@@ -2194,7 +2233,7 @@ function workoutView() {
     items.forEach((ex, i) => list.appendChild(moveRow(W, ex, i)));
     if (W.circuit && W.finisher) list.appendChild(finisherRow(W));
     kids.push(section(W.circuit ? 'Moves' : 'Exercises', null, list,
-      W.circuit ? el('div', { class: 'footnote' }, ['Each round: every move once, top to bottom.', gymOrderNote(W), 'Tap a move for form tips, the no-kit swap and stages.'].filter(Boolean).join(' ')) : null));
+      W.circuit ? el('div', { class: 'footnote' }, [gymOrderNote(W) || 'Each round: every move once, top to bottom.', 'Tap a move for form tips, the no-kit swap and stages.'].filter(Boolean).join(' ')) : null));
     // Added extras
     const extras = W.entry.exercises.filter(ex => ex.added);
     kids.push(section(extras.length ? 'Extras' : null, null, el('div', { class: 'list' },
@@ -2211,7 +2250,7 @@ function moveRow(W, ex, i, extra) {
   const info = exInfo(ex.n);
   const fam = programKeyFor(W.dk) === 'low' && liFamilyOf(ex.n);
   const doneSets = ex.sets.filter(s => s.done).length;
-  const isDone = W.circuit && !extra ? W.roundsDone >= W.plan.rounds : ex.sets.length && doneSets === ex.sets.length;
+  const isDone = W.circuit && !extra ? doneSets >= W.plan.rounds : ex.sets.length && doneSets === ex.sets.length;
   let sub;
   if (fam) {
     const st = liStage(fam);
@@ -2240,8 +2279,11 @@ function howItWorks(W) {
   const r = W.roundsDone;
   return el('div', { class: 'card steps-howto' },
     step(1, 'Warm up for 5 minutes, easy on the bike or rower.', r > 0),
-    step(2, `Do each move once, top to bottom, with ${W.plan.rest}s rest between moves. That’s one round.`, r > 0),
-    step(3, `Do ${W.plan.rounds} rounds, resting 1–2 minutes between them.`, r >= W.plan.rounds),
+    ...(stationGroups(W.moves).length > 1 ? [
+      step(2, `Start at the ${STATION_LABEL[stationGroups(W.moves)[0].st]}: do its moves once with ${W.plan.rest}s rest between them. That’s one round. Do all ${W.plan.rounds} rounds there, a minute’s rest between rounds.`, stationGroups(W.moves)[0].done >= W.plan.rounds),
+      step(3, `Then move to the ${stationGroups(W.moves).slice(1).map(g => g.label).join(', then the ')} and do the same.`, r >= W.plan.rounds)]
+    : [step(2, `Do each move once, top to bottom, with ${W.plan.rest}s rest between moves. That’s one round.`, r > 0),
+      step(3, `Do ${W.plan.rounds} rounds, resting 1–2 minutes between them.`, r >= W.plan.rounds)]),
     W.finisher ? step(4, W.finisher.n === '1 km Treadmill Run' ? 'Finish with a steady 1 km run on the treadmill.' : `Finish with ${W.plan.ints} intervals: 30s hard, 60s easy.`, W.finDone) : null,
     low ? el('div', { class: 'footnote', style: 'padding:4px 0 0;' }, 'Every move has 3 stages: bodyweight, then bands, then light weights. Move up only when every rep is slow and clean.') : null);
 }
